@@ -407,6 +407,52 @@
     /* ══ FADE IN ══ */
     .fade-in { opacity: 0; transform: translateY(22px); transition: opacity .7s ease, transform .7s ease; }
     .fade-in.visible { opacity: 1; transform: translateY(0); }
+  
+    /* ══ MUSIC BUTTON ══ */
+    .music-btn {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 2px solid rgba(212,168,67,.6);
+      background: linear-gradient(135deg, rgba(26,10,46,.95), rgba(10,26,46,.95));
+      backdrop-filter: blur(10px);
+      color: var(--gold);
+      font-size: 1.4rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,.4), 0 0 0 0 rgba(212,168,67,.4);
+      transition: transform .2s, box-shadow .2s;
+      z-index: 999;
+    }
+    .music-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 32px rgba(0,0,0,.5), 0 0 0 6px rgba(212,168,67,.15);
+    }
+    .music-btn.playing {
+      animation: pulse-ring 2s ease-in-out infinite;
+    }
+    @keyframes pulse-ring {
+      0%   { box-shadow: 0 4px 24px rgba(0,0,0,.4), 0 0 0 0 rgba(212,168,67,.4); }
+      50%  { box-shadow: 0 4px 24px rgba(0,0,0,.4), 0 0 0 10px rgba(212,168,67,.0); }
+      100% { box-shadow: 0 4px 24px rgba(0,0,0,.4), 0 0 0 0 rgba(212,168,67,.0); }
+    }
+    .music-btn .note {
+      transition: transform .3s;
+    }
+    .music-btn.playing .note {
+      animation: spin-note 3s linear infinite;
+    }
+    @keyframes spin-note {
+      0%   { transform: rotate(0deg) scale(1); }
+      50%  { transform: rotate(180deg) scale(1.2); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+
   </style>
 </head>
 <body>
@@ -646,5 +692,62 @@
   }, { threshold: 0.12 });
   document.querySelectorAll('.fade-in').forEach(el => io.observe(el));
 </script>
+
+  <!-- MUSIC BUTTON -->
+  <audio id="bgMusic" src="tk.mp3" loop preload="none"></audio>
+  <button class="music-btn" id="musicBtn" title="Музыка">
+    <span class="note">🎵</span>
+  </button>
+
+  <script>
+    const audio = document.getElementById('bgMusic');
+    const btn = document.getElementById('musicBtn');
+    const note = btn.querySelector('.note');
+    let playing = false;
+
+    // Экранды алғаш рет басқанда автоматты қосылады
+    function startMusic() {
+      audio.volume = 0;
+      audio.play().then(() => {
+        // Жайлап дыбыс көтеру (fade in)
+        let vol = 0;
+        const fade = setInterval(() => {
+          vol = Math.min(vol + 0.05, 0.8);
+          audio.volume = vol;
+          if (vol >= 0.8) clearInterval(fade);
+        }, 100);
+        note.textContent = '🎶';
+        btn.classList.add('playing');
+        playing = true;
+      }).catch(() => {});
+      document.removeEventListener('click', startOnClick);
+      document.removeEventListener('touchstart', startOnClick);
+    }
+
+    function startOnClick() {
+      startMusic();
+    }
+
+    // Бірінші touch/click-те қосылады
+    document.addEventListener('click', startOnClick);
+    document.addEventListener('touchstart', startOnClick);
+
+    // Батырма — қол қосу/өшіру
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!playing) {
+        audio.play();
+        note.textContent = '🎶';
+        btn.classList.add('playing');
+        playing = true;
+      } else {
+        audio.pause();
+        note.textContent = '🎵';
+        btn.classList.remove('playing');
+        playing = false;
+      }
+    });
+  </script>
+
 </body>
 </html>
